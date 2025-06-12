@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>英文口說遊戲</title>
+  <style>
+    body, html {
+      overflow: hidden;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    /* 封面 */
+    #cover {
+      width: 100vw;
+      height: 100vh;
+      background-image: url('cover_image.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #cover-title {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: #fff;
+      font-size: 52px;
+      font-weight: bold;
+      background-color: #007bff;
+      padding: 40px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.5);
+    }
+    .game-button {
+      background-color: white;
+      color: #ff0000;
+      font-size: 30px;
+      font-weight: bold;
+      padding: 20px 40px;
+      border: 3px solid #ff0000;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      text-transform: uppercase;
+      margin-top: 20px;
+    }
+    .game-button:hover {
+      background-color: rgba(0,0,0,0);
+      transform: scale(1.1);
+    }
+
+    /* 遊戲畫面 */
+    #game-container, #learning-container {
+      display: none; /* 初始隱藏 */
+    }
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+      background-image: url('game_background.jpg');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+      text-align: center;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #target-item {
+      max-width: 150px;
+      max-height: 150px;
+      display: none;
+      position: absolute;
+    }
+    /* 分數與時間放在遊戲畫面左上角 */
+    #score, #timer {
+      position: absolute;
+      top: 20px;
+      left: 20%;
+      color: #000;
+      font-size: 24px;
+      font-weight: bold;
+      margin: 0;
+    }
+    #timer {
+      top: 60px;
+    }
+    /* 答對/答錯訊息置中 */
+    #result {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #000;
+      font-size: 24px;
+      font-weight: bold;
+      margin: 0;
+    }
+    /* 遊戲結束 */
+    #game-over {
+      font-size: 36px;
+      font-weight: bold;
+      color: #000;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+    /* 爆炸效果 */
+    .explosion {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-color: yellow;
+      border-radius: 50%;
+      animation: explosion-animation 0.5s ease-out forwards;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    @keyframes explosion-animation {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.7; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    /* 學習畫面 */
+    #learning-container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #ccffcc;
+      position: relative;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    /* 逐題學習相關 */
+    #learning-image {
+      max-width: 200px;
+      margin: 10px;
+      display: none; /* 預設隱藏，等到逐題學習時顯示 */
+    }
+    #correct-reading-text {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0;
+      display: none; /* 預設隱藏 */
+    }
+    #learning-result {
+      color: red;
+      font-weight: bold;
+      margin: 10px;
+    }
+    #play-audio-button, #learning-speak-button {
+      display: none; /* 預設隱藏 */
+    }
+    #back-button {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 封面 -->
+  <div id="cover">
+    <h1 id="cover-title">歡迎來到英文口說遊戲！</h1>
+    <button id="cover-button" class="game-button">開始遊戲</button>
+    <button id="learning-file-button" class="game-button">學習檔案</button>
+  </div>
+
+  <!-- 遊戲畫面 -->
+  <div id="game-container">
+    <h1 class="text-elements">英文口說遊戲</h1>
+    <img id="target-item" src="" alt="圖片中的單字">
+    <p id="result" class="text-elements"></p>
+    <p id="score" class="text-elements">分數: 0</p>
+    <p id="timer" class="text-elements">剩餘時間: 30 秒</p>
+    <p id="game-over" class="text-elements"></p>
+    <button id="start-button" class="game-button">開始遊戲</button>
+    <button id="restart-button" class="game-button" style="display: none;">重新開始</button>
+    <button id="submit-score" class="game-button" style="display: none;">提交分數</button>
+  </div>
+
+  <!-- 學習畫面 -->
+  <div id="learning-container">
+    <h2>錯誤題目學習</h2>
+    <!-- 逐題學習區塊 -->
+    <img id="learning-image" src="" alt="學習題目圖片">
+    <p id="correct-reading-text"></p>
+    <p id="learning-result"></p>
+    <button id="play-audio-button" class="game-button">播放正確讀音</button>
+    <button id="learning-speak-button" class="game-button">我要說</button>
+    <button id="back-button" class="game-button">返回首頁</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      /* ========= 封面區塊 ========= */
+      const cover = document.getElementById('cover');
+      const coverButton = document.getElementById('cover-button');
+      const learningFileButton = document.getElementById('learning-file-button');
+      const learningContainer = document.getElementById('learning-container');
+      const backButton = document.getElementById('back-button');
+
+      // 按下「開始遊戲」
+      coverButton.addEventListener('click', function() {
+        checkMicrophonePermission();
+      });
+
+      // 按下「學習檔案」：從封面進入，抓歷史錯誤題目並以逐題方式呈現
+      learningFileButton.addEventListener('click', function() {
+        const playerName = prompt("請輸入您的名字：");
+        if (playerName) {
+          localStorage.setItem("playerName", playerName);
+          localStorage.setItem("learningMode", "fromCover");
+          cover.style.display = 'none';
+          // 直接進入學習畫面，由 showLearningScreen 處理 fetch 與逐題呈現
+          showLearningScreen();
+        }
+      });
+
+      // 「返回首頁」
+      backButton.addEventListener('click', function() {
+        returnToCover();
+      });
+
+      /* ========= 遊戲區塊 ========= */
+      const gameContainer = document.getElementById('game-container');
+      const targetItemElement = document.getElementById('target-item');
+      const resultElement = document.getElementById('result');
+      const scoreElement = document.getElementById('score');
+      const timerElement = document.getElementById('timer');
+      const gameOverElement = document.getElementById('game-over');
+      const startButton = document.getElementById('start-button');
+      const restartButton = document.getElementById('restart-button');
+      const submitScoreButton = document.getElementById('submit-score');
+
+      // 假設有 6 個洞位置
+      const holePositions = [
+        { x: 525, y: 350 },
+        { x: 875, y: 350 },
+        { x: 1220, y: 350 },
+        { x: 525, y: 550 },
+        { x: 875, y: 550 },
+        { x: 1220, y: 550 }
+      ];
+
+      // 遊戲題目
+      const items = [
+        { name: "umbrella", imgSrc: "umbrella.jpg", audioSrc: "umbrella.mp3" },
+        { name: "apple",    imgSrc: "apple.jpg",    audioSrc: "apple.mp3" },
+        { name: "banana",   imgSrc: "banana.jpg",   audioSrc: "banana.mp3" },
+        { name: "elephant", imgSrc: "elephant.jpg", audioSrc: "elephant.mp3" },
+        { name: "frog",     imgSrc: "frog.jpg",     audioSrc: "frog.mp3" },
+        { name: "egg",      imgSrc: "egg.jpg",      audioSrc: "egg.mp3" },
+        { name: "eye",      imgSrc: "eye.jpg",      audioSrc: "eye.mp3" },
+        { name: "ear",      imgSrc: "ear.jpg",      audioSrc: "ear.mp3" },
+        { name: "desk",     imgSrc: "desk.jpg",     audioSrc: "desk.mp3" },
+        { name: "dog",      imgSrc: "dog.jpg",      audioSrc: "dog.mp3" },
+        { name: "dress",    imgSrc: "dress.jpg",    audioSrc: "dress.mp3" },
+        { name: "drum",     imgSrc: "drum.jpg",     audioSrc: "drum.mp3" },
+        { name: "fork",     imgSrc: "fork.jpg",     audioSrc: "fork.mp3" },
+        { name: "football", imgSrc: "football.jpg", audioSrc: "football.mp3" },
+        { name: "flower",   imgSrc: "flower.jpg",   audioSrc: "flower.mp3" },
+        { name: "airplane",  imgSrc: "airplane.jpg",  audioSrc: "airplane.mp3" },
+        { name: "baby",     imgSrc: "baby.jpg",     audioSrc: "baby.mp3" },
+        { name: "baseball", imgSrc: "baseball.jpg", audioSrc: "baseball.mp3" },
+        { name: "bicycle",  imgSrc: "bicycle.jpg",  audioSrc: "bicycle.mp3" },
+        { name: "butterfly",imgSrc: "butterfly.jpg",audioSrc: "butterfly.mp3" },
+        { name: "box",      imgSrc: "box.jpg",      audioSrc: "box.mp3" },
+        { name: "cake",     imgSrc: "cake.jpg",     audioSrc: "cake.mp3" },
+        { name: "cookies",  imgSrc: "cookies.jpg",  audioSrc: "cookies.mp3" },
+        { name: "chair",    imgSrc: "chair.jpg",    audioSrc: "chair.mp3" },
+        { name: "clock",    imgSrc: "clock.jpg",    audioSrc: "clock.mp3" },
+        { name: "chocolate",imgSrc: "chocolate.jpg",audioSrc: "chocolate.mp3" },
+        { name: "gift",     imgSrc: "gift.jpg",     audioSrc: "gift.mp3" },
+        { name: "grape",    imgSrc: "grape.jpg",    audioSrc: "grape.mp3" },
+        { name: "glasses",  imgSrc: "glasses.jpg",  audioSrc: "glasses.mp3" },
+        { name: "grandma",  imgSrc: "grandma.jpg",  audioSrc: "grandma.mp3" },
+        { name: "hand",     imgSrc: "hand.jpg",     audioSrc: "hand.mp3" },
+        { name: "hat",      imgSrc: "hat.jpg",      audioSrc: "hat.mp3" },
+        { name: "hippo",    imgSrc: "hippo.jpg",    audioSrc: "hippo.mp3" },
+        { name: "house",    imgSrc: "house.jpg",    audioSrc: "house.mp3" },
+        { name: "hospital", imgSrc: "hospital.jpg", audioSrc: "hospital.mp3" },
+        { name: "ice cream",imgSrc: "ice cream.jpg",audioSrc: "ice cream.mp3" },
+        { name: "jacket",   imgSrc: "jacket.jpg",   audioSrc: "jacket.mp3" },
+        { name: "japan",    imgSrc: "japan.jpg",    audioSrc: "japan.mp3" },
+        { name: "juice",    imgSrc: "juice.jpg",    audioSrc: "juice.mp3" },
+        { name: "key",      imgSrc: "key.jpg",      audioSrc: "key.mp3" },
+        { name: "kite",     imgSrc: "kite.jpg",     audioSrc: "kite.mp3" },
+        { name: "knife",    imgSrc: "knife.jpg",    audioSrc: "knife.mp3" },
+        { name: "koala",    imgSrc: "koala.jpg",    audioSrc: "koala.mp3" },
+        { name: "lamp",     imgSrc: "lamp.jpg",     audioSrc: "lamp.mp3" },
+        { name: "lemon",    imgSrc: "lemon.jpg",    audioSrc: "lemon.mp3" },
+        { name: "lion",     imgSrc: "lion.jpg",     audioSrc: "lion.mp3" },
+        { name: "leg",      imgSrc: "leg.jpg",      audioSrc: "leg.mp3" },
+        { name: "lake",     imgSrc: "lake.jpg",     audioSrc: "lake.mp3" },
+        { name: "mailman",  imgSrc: "mailman.jpg",  audioSrc: "mailman.mp3" },
+        { name: "marker",   imgSrc: "marker.jpg",   audioSrc: "marker.mp3" },
+        { name: "monkey",   imgSrc: "monkey.jpg",   audioSrc: "monkey.mp3" },
+        { name: "moon",     imgSrc: "moon.jpg",     audioSrc: "moon.mp3" },
+        { name: "nurse",    imgSrc: "nurse.jpg",    audioSrc: "nurse.mp3" },
+        { name: "nose",     imgSrc: "nose.jpg",     audioSrc: "nose.mp3" },
+        { name: "noodles",  imgSrc: "noodles.jpg",  audioSrc: "noodles.mp3" },
+        { name: "nine",     imgSrc: "nine.jpg",     audioSrc: "nine.mp3" },
+        { name: "orange",   imgSrc: "orange.jpg",   audioSrc: "orange.mp3" },
+        { name: "office",   imgSrc: "office.jpg",   audioSrc: "office.mp3" },
+        { name: "panda",    imgSrc: "panda.jpg",    audioSrc: "panda.mp3" },
+        { name: "pants",    imgSrc: "pants.jpg",    audioSrc: "pants.mp3" },
+        { name: "peach",    imgSrc: "peach.jpg",    audioSrc: "peach.mp3" },
+        { name: "piano",    imgSrc: "piano.jpg",    audioSrc: "piano.mp3" },
+        { name: "pie",      imgSrc: "pie.jpg",      audioSrc: "pie.mp3" },
+        { name: "pig",      imgSrc: "pig.jpg",      audioSrc: "pig.mp3" },
+        { name: "pizza",    imgSrc: "pizza.jpg",    audioSrc: "pizza.mp3" },
+        { name: "pumpkin",  imgSrc: "pumpkin.jpg",audioSrc: "pumpkin.mp3" },
+        { name: "policeofficer",imgSrc: "policeofficer.jpg",audioSrc: "policeofficer.mp3" },
+        { name: "rabbit",   imgSrc: "rabbit.jpg",   audioSrc: "rabbit.mp3" },
+        { name: "rain",     imgSrc: "rain.jpg",     audioSrc: "rain.mp3" },
+        { name: "rainbow",  imgSrc: "rainbow.jpg",  audioSrc: "rainbow.mp3" },
+        { name: "refrigerator",  imgSrc: "refrigerator.jpg",  audioSrc: "refrigerator.mp3" },
+        { name: "rice",     imgSrc: "rice.jpg",     audioSrc: "rice.mp3" },
+        { name: "robot",    imgSrc: "robot.jpg",    audioSrc: "robot.mp3" },
+        { name: "ruler",    imgSrc: "ruler.jpg",    audioSrc: "ruler.mp3" },
+        { name: "salad",    imgSrc: "salad.jpg",    audioSrc: "salad.mp3" },
+        { name: "sandwich", imgSrc: "sandwich.jpg", audioSrc: "sandwich.mp3" },
+        { name: "sheep",    imgSrc: "sheep.jpg",    audioSrc: "sheep.mp3" },
+        { name: "snake",    imgSrc: "snake.jpg",    audioSrc: "snake.mp3" },
+        { name: "sun",      imgSrc: "sun.jpg",      audioSrc: "sun.mp3" },
+        { name: "swim",     imgSrc: "swim.jpg",    audioSrc: "swim.mp3" },
+        { name: "sofa",     imgSrc: "sofa.jpg",     audioSrc: "sofa.mp3" },
+        { name: "taxi",     imgSrc: "taxi.jpg",     audioSrc: "taxi.mp3" },
+        { name: "tiger",    imgSrc: "tiger.jpg",    audioSrc: "tiger.mp3" },
+        { name: "train",    imgSrc: "train.jpg",    audioSrc: "train.mp3" },
+        { name: "truck",    imgSrc: "truck.jpg",    audioSrc: "truck.mp3" },
+        { name: "turtle",   imgSrc: "turtle.jpg",   audioSrc: "turtle.mp3" },
+        { name: "TV",       imgSrc: "TV.jpg",       audioSrc: "TV.mp3" },
+        { name: "tree",     imgSrc: "tree.jpg",     audioSrc: "tree.mp3" },
+        { name: "toy",      imgSrc: "toy.jpg",      audioSrc: "toy.mp3" },
+        { name: "watch",    imgSrc: "watch.jpg",    audioSrc: "watch.mp3" },
+        { name: "watermelon",imgSrc: "watermelon.jpg",audioSrc: "watermelon.mp3" },
+        { name: "whale",    imgSrc: "whale.jpg",    audioSrc: "whale.mp3" },
+        { name: "wind",     imgSrc: "wind.jpg",     audioSrc: "wind.mp3" },
+        { name: "wall",     imgSrc: "wall.jpg",     audioSrc: "wall.mp3" },
+        { name: "water",    imgSrc: "water.jpg",    audioSrc: "water.mp3" },
+        { name: "waiter",   imgSrc: "waiter.jpg",   audioSrc: "waiter.mp3" },
+        { name: "zoo",      imgSrc: "zoo.jpg",      audioSrc: "zoo.mp3" },
+        { name: "zero",     imgSrc: "zero.jpg",     audioSrc: "zero.mp3" },
+        { name: "zebra",    imgSrc: "zebra.jpg",    audioSrc: "zebra.mp3" },
+        { name: "hamburger",imgSrc: "hamburger.jpg",audioSrc: "hamburger.mp3" }
+      ];
+
+      let remainingItems = [...items];
+      let targetItem;            // 目前題目
+      let score = 0;             // 分數
+      let timer = 30;            // 倒數計時
+      let gameRunning = false;   // 遊戲是否進行中
+      let recognition;           // 語音辨識物件
+      let mispronouncedWordsArray = []; // (用不到時可刪)
+      let correctAnswerArray = [];      // 收集錯誤題目
+      let targetTimeout;         // 錯誤後 3 秒換題
+
+      // 學習模式（逐題呈現）變數
+      let learningWords = [];
+      let learningIndex = 0;
+
+      // 隨機洞口
+      function randomHole() {
+        const randomIndex = Math.floor(Math.random() * holePositions.length);
+        return holePositions[randomIndex];
+      }
+
+      // 隨機拿一題
+      function generateRandomItem() {
+        if (remainingItems.length === 0) {
+          remainingItems = [...items];
+        }
+        const newItemIndex = Math.floor(Math.random() * remainingItems.length);
+        return remainingItems.splice(newItemIndex, 1)[0];
+      }
+
+      // 更新分數
+      function updateScore() {
+        scoreElement.textContent = `分數: ${score}`;
+      }
+
+      // 更新倒數
+      function updateTimer() {
+        timerElement.textContent = `剩餘時間: ${timer} 秒`;
+      }
+
+      // 開始計時
+      function startTimer() {
+        clearInterval(window.timerInterval);
+        window.timerInterval = setInterval(() => {
+          if (timer > 0) {
+            timer--;
+            updateTimer();
+          } else {
+            clearInterval(window.timerInterval);
+            endGame();
+          }
+        }, 1000);
+      }
+
+      // 結束遊戲
+      function endGame() {
+        gameRunning = false;
+        gameOverElement.textContent = `遊戲結束！得分: ${score}`;
+        gameOverElement.style.display = 'block';
+        restartButton.style.display = 'none';
+        submitScoreButton.style.display = 'inline';
+        if (recognition) recognition.abort();
+        submitScoreButton.addEventListener('click', submitScore);
+      }
+
+      // 提交分數 => 進入學習畫面
+      async function submitScore() {
+        const playerName = prompt('請輸入您的名字：');
+        if (playerName) {
+          // mispronouncedWordsArray 可省略
+          const mispronouncedWords = mispronouncedWordsArray.join(', ');
+          await saveScore(playerName, score, mispronouncedWords, correctAnswerArray);
+
+          // 從遊戲進入學習
+          localStorage.setItem("learningMode", "fromGame");
+          showLearningScreen();
+        }
+      }
+
+      // 將分數、錯誤題目送到後端
+      async function saveScore(playerName, score, mispronouncedWords, correctAnswerArray) {
+        try {
+          const response = await fetch('/save-score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName, score, mispronouncedWords, correctAnswerArray })
+          });
+          const data = await response.json();
+          console.log(data);
+        } catch (error) {
+          console.error('保存分数时出错：', error);
+        }
+      }
+
+      // 開始遊戲
+      function startGame() {
+        cover.style.display = 'none';
+        gameContainer.style.display = 'block';
+        score = 0;
+        timer = 30;
+        resultElement.textContent = '';
+        gameOverElement.textContent = '';
+        updateScore();
+        updateTimer();
+        startTimer();
+        correctAnswerArray = []; // 收集本次錯誤題目
+        gameRunning = true;
+        mispronouncedWordsArray = [];
+
+        if (remainingItems.length === 0) {
+          remainingItems = [...items];
+        }
+        const firstItem = generateRandomItem();
+        if (firstItem) {
+          startButton.style.display = 'none';
+          restartButton.style.display = 'none';
+          submitScoreButton.style.display = 'none';
+          showTarget(firstItem);
+        } else {
+          console.error('目標項未定義');
+        }
+      }
+
+      // 顯示題目
+      function showTarget(item) {
+        clearTimeout(targetTimeout);
+        targetTimeout = null;
+        targetItem = item;
+        targetItemElement.src = item.imgSrc;
+        const hole = randomHole();
+        targetItemElement.style.left = `${hole.x}px`;
+        targetItemElement.style.top = `${hole.y}px`;
+        targetItemElement.style.display = 'block';
+
+        if (recognition) recognition.abort();
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = function (event) {
+          if (!gameRunning) return;
+          const playerDescription = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+          console.log(playerDescription);
+
+          if (playerDescription === targetItem.name.toLowerCase()) {
+            // 答對
+            if (targetTimeout) {
+              clearTimeout(targetTimeout);
+              targetTimeout = null;
+            }
+            resultElement.textContent = '答對了！得2分';
+            score += 2;
+            updateScore();
+            triggerExplosionEffect();
+
+            const nextItem = generateRandomItem();
+            if (nextItem) {
+              showTarget(nextItem);
+            } else {
+              console.error('無法生成下一個題目');
+            }
+          } else {
+            // 答錯
+            resultElement.textContent = `答錯了！正確答案是 ${targetItem.name}`;
+            correctAnswerArray.push(targetItem.name.toLowerCase());
+
+            if (!targetTimeout) {
+              targetTimeout = setTimeout(() => {
+                const nextItem = generateRandomItem();
+                if (nextItem) {
+                  showTarget(nextItem);
+                }
+              }, 3000);
+            }
+          }
+          recognition.stop();
+          recognition.start();
+        };
+
+        recognition.onerror = function (event) {
+          console.error('語音辨識錯誤', event.error);
+        };
+
+        recognition.onend = function () {
+          if (gameRunning) recognition.start();
+        };
+
+        recognition.start();
+      }
+
+      // 爆炸特效
+      function triggerExplosionEffect() {
+        const rect = targetItemElement.getBoundingClientRect();
+        const explosion = document.createElement('div');
+        explosion.classList.add('explosion');
+        explosion.style.left = rect.left + rect.width / 2 - 50 + 'px';
+        explosion.style.top = rect.top + rect.height / 2 - 50 + 'px';
+        document.body.appendChild(explosion);
+        setTimeout(() => {
+          explosion.remove();
+        }, 500);
+      }
+
+      /* ============ 麥克風權限檢查 ============ */
+      async function askForMicrophonePermission() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+          return true;
+        } catch (error) {
+          console.error('無法取得麥克風許可', error);
+          return false;
+        }
+      }
+
+      async function checkMicrophonePermission() {
+        if (!localStorage.getItem('microphonePermission')) {
+          const hasPermission = await askForMicrophonePermission();
+          if (hasPermission) {
+            localStorage.setItem('microphonePermission', 'granted');
+            startGame();
+          } else {
+            console.error('未取得麥克風許可');
+          }
+        } else {
+          startGame();
+        }
+      }
+
+      /* ============ 學習畫面邏輯 ============ */
+      function showLearningScreen() {
+        // 依照學習模式，從遊戲或從封面進入學習
+        gameContainer.style.display = 'none';
+        learningContainer.style.display = 'flex';
+        const mode = localStorage.getItem("learningMode");
+        if (mode === "fromGame") {
+          // 來自遊戲的錯誤題目
+          document.getElementById('back-button').style.display = 'none';
+          const uniqueWrongWords = Array.from(new Set(correctAnswerArray));
+          learningWords = uniqueWrongWords.map(ans => {
+            const foundItem = items.find(i => i.name.toLowerCase() === ans);
+            return foundItem ? foundItem : { name: ans, imgSrc: "default.jpg", audioSrc: "default.mp3" };
+          });
+          learningIndex = 0;
+          loadLearningItem(learningIndex);
+        } else if (mode === "fromCover") {
+          // 來自封面：抓取歷史錯誤題目並以逐題方式呈現
+          document.getElementById('back-button').style.display = 'inline';
+          const playerName = localStorage.getItem("playerName");
+          if (!playerName) {
+            alert("請先輸入姓名並進行遊戲！");
+            returnToCover();
+            return;
+          }
+          fetch(`/get-wrong-words?playerName=${encodeURIComponent(playerName)}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.length === 0) {
+                alert("目前沒有錯誤題目，請先進行遊戲。");
+                returnToCover();
+              } else {
+                // 去重處理
+                const uniqueData = Array.from(new Set(data.map(item => item.name.toLowerCase())))
+                  .map(name => data.find(d => d.name.toLowerCase() === name));
+                learningWords = uniqueData;
+                learningIndex = 0;
+                loadLearningItem(learningIndex);
+              }
+            })
+            .catch(err => console.error("取得錯誤題目失敗：", err));
+        }
+      }
+
+      // 逐題顯示：loadLearningItem
+      function loadLearningItem(index) {
+        if (index >= learningWords.length) {
+          alert("全部錯誤題目已學習完，返回首頁！");
+          resetLearningState();
+          returnToCover();
+          return;
+        }
+        const item = learningWords[index];
+        const learningImage = document.getElementById('learning-image');
+        const correctReadingText = document.getElementById('correct-reading-text');
+        const learningResult = document.getElementById('learning-result');
+        const playAudioButton = document.getElementById('play-audio-button');
+        const learningSpeakButton = document.getElementById('learning-speak-button');
+
+        // 顯示逐題學習介面
+        learningImage.style.display = 'block';
+        correctReadingText.style.display = 'block';
+        playAudioButton.style.display = 'inline-block';
+        learningSpeakButton.style.display = 'inline-block';
+
+        learningImage.src = item.imgSrc;
+        correctReadingText.textContent = item.name;
+        learningResult.textContent = "";
+
+        playAudioButton.onclick = function() {
+          const audio = new Audio(item.audioSrc);
+          audio.play();
+        };
+        learningSpeakButton.onclick = function() {
+          startLearningRecognition(item.name, index);
+        };
+      }
+
+      // 逐題學習：語音辨識
+      function startLearningRecognition(correctWord, index) {
+        const learningRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        learningRecognition.lang = 'en-US';
+        learningRecognition.continuous = false;
+
+        learningRecognition.onresult = function (event) {
+          const userSpoken = event.results[0][0].transcript.trim().toLowerCase();
+          const learningResult = document.getElementById('learning-result');
+
+          if (userSpoken === correctWord.toLowerCase()) {
+            learningResult.textContent = "發音正確！";
+            setTimeout(() => {
+              loadLearningItem(index + 1);
+            }, 1000);
+          } else {
+            learningResult.textContent = "答錯了，請再試一次！";
+          }
+        };
+
+        learningRecognition.onerror = function (event) {
+          console.error("語音辨識錯誤: ", event.error);
+        };
+
+        learningRecognition.start();
+      }
+
+      // 返回封面並重置學習狀態
+      function returnToCover() {
+        learningContainer.style.display = 'none';
+        cover.style.display = 'flex';
+        localStorage.removeItem("learningMode");
+      }
+
+      // 重置學習模式相關變數
+      function resetLearningState() {
+        correctAnswerArray = [];
+        mispronouncedWordsArray = [];
+        learningWords = [];
+        learningIndex = 0;
+        localStorage.removeItem("learningMode");
+      }
+    });
+  </script>
+</body>
+</html>
