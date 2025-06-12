@@ -5,7 +5,7 @@ const mysql = require('mysql');
 const path = require('path');
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 // Middleware to parse JSON requests
 app.use(express.json());

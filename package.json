@@ -1,6 +1,14 @@
 {
+  "name": "speech-game",
+  "version": "1.0.0",
+  "description": "A speech recognition English game using Node.js and MySQL",
+  "main": "servernew.js",
+  "scripts": {
+    "start": "node servernew.js"
+  },
   "dependencies": {
     "express": "^4.19.2",
     "mysql": "^2.18.1"
   }
 }
+
