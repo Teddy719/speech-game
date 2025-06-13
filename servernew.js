@@ -1,11 +1,15 @@
-const cors = require('cors');
-app.use(cors());
+require('dotenv').config(); // ✅ 載入 .env 檔案
+
 const express = require('express');
+const cors = require('cors');
 const mysql = require('mysql');
 const path = require('path');
 
-const app = express();
-const port = 3001;
+const app = express();  // ✅ 初始化 Express
+app.use(cors());        // ✅ 使用 CORS middleware
+
+const port = process.env.PORT || 3001;
+
 
 // Middleware to parse JSON requests
 app.use(express.json());
