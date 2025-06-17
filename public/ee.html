@@ -79,7 +79,6 @@
       max-height: 150px;
       display: none;
       position: absolute;
-      transform: translate(-50%, -50%);
     }
     /* 分數與時間放在遊戲畫面左上角 */
     #score, #timer {
@@ -247,12 +246,12 @@
 
       // 假設有 6 個洞位置
       const holePositions = [
-        { x: '20%', y: '35%' },
-        { x: '50%', y: '35%' },
-        { x: '80%', y: '35%' },
-        { x: '20%', y: '65%' },
-        { x: '50%', y: '65%' },
-        { x: '80%', y: '65%' }
+        { x: 400, y: 300 },
+        { x: 700, y: 300 },
+        { x: 970, y: 300 },
+        { x: 400, y: 550 },
+        { x: 700, y: 550 },
+        { x: 970, y: 550 }
       ];
 
       // 遊戲題目
@@ -418,8 +417,8 @@
         targetItem = item;
         targetItemElement.src = item.imgSrc;
         const hole = randomHole();
-        targetItemElement.style.left = hole.x;
-        targetItemElement.style.top = hole.y;
+        targetItemElement.style.left = `${hole.x}px`;
+        targetItemElement.style.top = `${hole.y}px`;
         targetItemElement.style.display = 'block';
 
         if (recognition) recognition.abort();
